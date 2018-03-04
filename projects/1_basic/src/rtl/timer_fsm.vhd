@@ -34,6 +34,50 @@ SIGNAL current_state, next_state : STATE_TYPE; -- trenutno i naredno stanje auto
 
 BEGIN
 
+process (rst_i, clk_i) begin
+	if(rst_i='0') then
+		current_state<=IDLE;
+	elsif(clk_i'event and clk_i='1') then
+		current_state<=next_state;
+	end if;
+end process;
+
+process(current_state, start_switch_i, reset_switch_i, stop_switch_i, continue_switch_i) begin
+	case(current_state) is
+		when IDLE=> if(start_switch_i='1') then
+							next_state<=COUNT;
+						else 
+							next_state<=current_state;
+						end if;
+		when COUNT=> if(reset_switch_i='1') then
+							next_state<=IDLE;
+						 elsif(stop_switch_i='1') then
+							next_state<=STOP;
+						 else
+							next_state<=current_state;
+						 end if;
+		when others => if(reset_switch_i='1') then
+								next_state<=IDLE;
+							elsif(continue_switch_i='1') then
+								next_state<=COUNT;
+							else
+								next_state<=current_state;
+							end if;
+	end case;
+end process;
+
+process(current_state) begin
+	case(current_state) is
+		when IDLE => cnt_en_o<='0';
+						 cnt_rst_o<='1';
+		when COUNT => cnt_en_o<='1';
+						  cnt_rst_o<='0';
+		when others => cnt_en_o<='0';
+						   cnt_rst_o<='0';
+	end case;
+end process;
+
+
 -- DODATI :
 -- automat sa konacnim brojem stanja koji upravlja brojanjem sekundi na osnovu stanja prekidaca
 
